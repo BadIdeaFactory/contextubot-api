@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+- 6
+cache:
+  directories:
+  - node_modules
+script:
+- npm test
+notifications:
+  irc: chat.freenode.net#contextubot
+  slack:
+    rooms:
+      secure: kna0cUkuVYp7LWkT5dj2Z9fx5+6dOClbPoqKh9MajKFStGOW7QmkSZkmAB9WJ3QcxHzr9TB6Bhbt8I25zm3LqWLSKdcXSro1ui1YfkfUpMW799kxFTx0pLiBWujt23unJBRr3Ba7sjyFP0JoVpGf1jl8w01yp5v6MVLv2wsNrDSYVqD0vEY5v9/uODwfTxpBJ5IWChTPD5Jrm+/yIJkn6c9o/TiFrrBERZOOcd5Kg0jtYqoao9EPYP83VNBVfVvXuFR2lI8304vaGg19zejdeLstMl+2Hd2rQRTvm2OJ7Ygiik5jHAv7ipXRioPTqVf3RiiiP8Bqc/81bygegd2mC1rkdBzZGpp39I+5KgkmG4uezGF1GLLFETrr9Ac3LuEq2A3pwmHVtsPY+scG7zp6PtxSBYdNtEfc7X9w0PJfE30r+FfQVNaaVHTQSIMbOeJPWEAC7/qidv2JUU+xeSiExMcfjox94RAFnuEfq3ZeXbjVp7qUsW9YfThiNboNAdfIGJjYL4bVw4mQL/v+4QjTtFgJdjEwLM/OLyJc320YTb7rPG29unbw+f8C+ftvp3iX4+lqQyaOtpni8FMaByiTbKuxORVBlLXpCrfr2s3ruTcZ+8TbBJZwSyK7NpVcfv+XenR3KpkSyx+xgntb0PVs7V38iosRRzXy40r2lSSiWyg=
