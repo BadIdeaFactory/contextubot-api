@@ -18,13 +18,16 @@
     "lint": "esw -w src test"
   },
   "dependencies": {
+    "aws-sdk": "^2.108.0",
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.4.0",
     "body-parser": "^1.17.1",
+    "debug": "^3.0.1",
     "express": "^4.15.2",
     "morgan": "^1.7.0",
-    "pug": "^2.0.0-beta11",
-    "rimraf": "^2.6.1"
+    "promise": "^8.0.1",
+    "rimraf": "^2.6.1",
+    "tmp": "^0.0.33"
   },
   "devDependencies": {
     "babel-jest": "^20.0.0",
