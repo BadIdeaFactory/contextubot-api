@@ -4,10 +4,6 @@
   "author": "Laurian Gridinoc <laurian@gridinoc.name>",
   "license": "MIT",
   "main": "dist/index.js",
-  "engines": {
-    "node": "~6.9.1",
-    "npm": ">=3.10.0"
-  },
   "scripts": {
     "prestart": "npm run -s build",
     "start": "node dist/index.js",
@@ -23,14 +19,18 @@
     "babel-preset-env": "^1.4.0",
     "body-parser": "^1.17.1",
     "debug": "^3.0.1",
+    "embedly": "^2.1.0",
     "express": "^4.15.2",
+    "ffprobe": "^1.1.0",
+    "ffprobe-static": "^2.0.0",
     "mime-types": "^2.1.17",
     "morgan": "^1.7.0",
     "promise": "^8.0.1",
     "requisition": "^1.7.0",
     "rimraf": "^2.6.1",
     "tmp": "^0.0.33",
-    "uuid": "^3.1.0"
+    "uuid": "^3.1.0",
+    "youtube-dl": "^1.12.2"
   },
   "devDependencies": {
     "babel-jest": "^20.0.0",
