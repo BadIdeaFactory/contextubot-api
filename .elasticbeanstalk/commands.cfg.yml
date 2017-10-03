@@ -1,0 +1,10 @@
+commands:
+  01_mkdir_ytdl:
+    command: mkdir /tmp/deployment/application/node_modules/youtube-dl/bin
+    ignoreErrors: true
+  02_chown_ytdl:
+    command: chown webapp:webapp /tmp/deployment/application/node_modules/youtube-dl/bin
+    ignoreErrors: true
+  02_chmod_ytdl:
+    command: chmod 777 webapp:webapp /tmp/deployment/application/node_modules/youtube-dl/bin
+    ignoreErrors: true
