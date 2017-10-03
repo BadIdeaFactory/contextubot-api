@@ -5,8 +5,6 @@ import { promisify } from 'util';
 
 import uuidv4 from 'uuid/v4';
 import mime from 'mime-types';
-import Promise from 'promise';
-import AWS from 'aws-sdk';
 import tmp from 'tmp';
 import request from 'requisition';
 
@@ -14,27 +12,17 @@ import express from 'express';
 import logger from 'morgan';
 import bodyParser from 'body-parser';
 
+import ffprobe from 'ffprobe';
+import ffprobeStatic from 'ffprobe-static';
+import embedly from 'embedly';
+import youtubedl from 'youtube-dl';
+
+import { putObject } from './aws';
 import self from '../package';
 
 const log = debug('contextubot:api');
 
 const readFile = promisify(fs.readFile);
-
-AWS.config.update({
-  accessKeyId: process.env.AWS_ID,
-  secretAccessKey: process.env.AWS_SECRET,
-});
-
-const s3 = new AWS.S3();
-
-const putObject = (params) => {
-  return new Promise((fulfill, reject) => {
-    s3.putObject(params, (err, res) => {
-      if (err) reject(err);
-      else fulfill(res);
-    });
-  });
-};
 
 const app = express();
 tmp.setGracefulCleanup();
@@ -52,6 +40,54 @@ app.get('/', (req, res) => {
   ]);
 });
 
+// get headers
+app.get('/headers', async (req, res) => {
+  log(req.body);
+  const { url } = req.query;
+
+  const response = await request['head'](url);
+  log(response.headers);
+  res.send({ data: response.headers });
+});
+
+// if html -> oembed?
+app.get('/embed', (req, res) => {
+  log(req.body);
+  const { url } = req.query;
+
+  const api = new embedly({ key: process.env.EMBEDLY_KEY });
+  api.oembed({ url }, (err, objs) => {
+    if (err) console.log(err); // FIXME
+    res.send({ data: objs });
+  });
+});
+
+// is it media?
+app.get('/ffprobe', async (req, res) => {
+  log(req.body);
+  const { url } = req.query;
+
+  const info = await ffprobe(url, { path: ffprobeStatic.path });
+  res.send({ data: info });
+});
+
+// media info // WE NEED TO RENAME THINGS AROUND HERE
+app.get('/info', async (req, res) => {
+  log(req.body);
+  const { url } = req.query;
+
+  youtubedl.getInfo(url, [], (err, info) => {
+    if (err) console.log(err); // FIXME
+    res.send({ data: info });
+  });
+});
+
+// extract media
+// app.post('/extract', async (req, res) => {
+//
+// });
+
+// fingerprint media
 app.post('/fingerprint', async (req, res) => {
   log(req.body);
   const { url } = req.body;
@@ -87,8 +123,9 @@ const processURL = async (url) => {
   // dir.removeCallback(); // FIXME ENOTEMPTY: directory not empty, rmdir
 
   // compute link
-  log(`https://s3.amazonaws.com/fingerprints.contextubot.net/test/${id}/${id}.afpt`);
-  return `https://s3.amazonaws.com/fingerprints.contextubot.net/test/${id}/${id}.afpt`;
+  const link = `https://s3.amazonaws.com/fingerprints.contextubot.net/test/${id}/${id}.afpt`;
+  log(link);
+  return link;
 }
 
 
