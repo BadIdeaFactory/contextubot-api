@@ -12,17 +12,20 @@ import express from 'express';
 import logger from 'morgan';
 import bodyParser from 'body-parser';
 
+import PythonShell from 'python-shell';
 import ffprobe from 'ffprobe';
 import ffprobeStatic from 'ffprobe-static';
 import embedly from 'embedly';
 import youtubedl from 'youtube-dl';
 
-import { putObject } from './aws';
+import { putObject, getObject } from './aws';
 import self from '../package';
 
 const log = debug('contextubot:api');
 
 const readFile = promisify(fs.readFile);
+const writeFile = promisify(fs.writeFile);
+const python = promisify(PythonShell.run);
 
 const app = express();
 tmp.setGracefulCleanup();
@@ -40,26 +43,79 @@ app.get('/', (req, res) => {
   ]);
 });
 
+/*
+
+URL -> deref 1 (HEAD)
+
+if html -> embedly, youtubedl => bin
+if bin -> ffprobe, fingerprint
+
+*/
+
+// worker code, TODO: adapt to api
+app.post('/', (req, res) => {
+  log(req.body);
+  const { Records } = req.body;
+
+  if (! Records) return res.send({ error: [{ message: 'no records' }] });
+  res.send({ data: Records.map(processRecord) });
+});
+
+const processRecord = async (record) => {
+ const [extension, name, id, ...prefix] = record.s3.object.key.split(/\/|\./).reverse(); // eslint-disable-line no-unused-vars
+ const dir = tmp.dirSync();
+
+ // download
+ const data = await getObject({
+   Bucket: record.s3.bucket.name,
+   Key: record.s3.object.key
+ });
+
+ // save
+ await writeFile(`${dir.name}/${id}.${extension.toLowerCase()}`, data.Body);
+
+ // fingerprint
+ const results = await python('audfprint.py', {
+   scriptPath: '/usr/src/audfprint/',
+   args: ['precompute', `${dir.name}/${id}.${extension.toLowerCase()}`, '-p', dir.name]
+ });
+ log(results);
+
+ // upload
+ const fingerprint = await readFile(`${dir.name}/${dir.name}/${id}.afpt`);
+ const result = await putObject({
+   Body: fingerprint,
+   ACL: 'public-read',
+   Bucket: 'fingerprints.contextubot.net', // TODO -> ENV
+   Key: `${prefix.reverse().join('/')}/${id}/${id}.afpt`
+ });
+
+ // dir.removeCallback(); // FIXME ENOTEMPTY: directory not empty, rmdir
+
+ log(result);
+ return result;
+};
+
+// end worker code
+
 // get headers
 app.get('/headers', async (req, res) => {
   log(req.body);
   const { url } = req.query;
 
-  const response = await request['head'](url);
-  log(response.headers);
-  res.send({ data: response.headers });
+  const { headers } = await request['head'](url);
+  log(headers);
+  res.send({ data: headers });
 });
 
 // if html -> oembed?
-app.get('/embed', (req, res) => {
+app.get('/embed', async (req, res) => {
   log(req.body);
   const { url } = req.query;
 
-  const api = new embedly({ key: process.env.EMBEDLY_KEY });
-  api.oembed({ url }, (err, objs) => {
-    if (err) console.log(err); // FIXME
-    res.send({ data: objs });
-  });
+  const api = promisify(new embedly({ key: process.env.EMBEDLY_KEY }));
+  const data = await api.oembed({ url });
+  res.send({ data });
 });
 
 // is it media?
@@ -67,8 +123,8 @@ app.get('/ffprobe', async (req, res) => {
   log(req.body);
   const { url } = req.query;
 
-  const info = await ffprobe(url, { path: ffprobeStatic.path });
-  res.send({ data: info });
+  const data = await ffprobe(url, { path: ffprobeStatic.path });
+  res.send({ data });
 });
 
 // media info // WE NEED TO RENAME THINGS AROUND HERE
@@ -76,10 +132,8 @@ app.get('/info', async (req, res) => {
   log(req.body);
   const { url } = req.query;
 
-  youtubedl.getInfo(url, [], (err, info) => {
-    if (err) console.log(err); // FIXME
-    res.send({ data: info });
-  });
+  const data = await promisify(youtubedl.getInfo)(url, []);
+  res.send({ data });
 });
 
 // extract media
@@ -91,7 +145,9 @@ app.get('/info', async (req, res) => {
 app.post('/fingerprint', async (req, res) => {
   log(req.body);
   const { url } = req.body;
-  res.send({ data: await processURL(url) });
+
+  const data = await processURL(url);
+  res.send({ data });
 });
 
 const processURL = async (url) => {
