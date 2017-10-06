@@ -1,0 +1,84 @@
+{
+  "name": "contextubot-api",
+  "version": "0.1.0",
+  "author": "Laurian Gridinoc <laurian@gridinoc.name>",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "scripts": {
+    "prestart": "npm run -s build",
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.js --exec \"node -r dotenv/config -r babel-register\"",
+    "clean": "rimraf dist",
+    "build": "npm run clean && mkdir -p dist && babel src -s -D -d dist",
+    "_test": "jest --watch",
+    "lint": "esw -w src test"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.108.0",
+    "babel-cli": "^6.24.1",
+    "babel-preset-env": "^1.4.0",
+    "body-parser": "^1.17.1",
+    "debug": "^3.0.1",
+    "embedly": "^2.1.0",
+    "express": "^4.15.2",
+    "ffprobe": "^1.1.0",
+    "ffprobe-static": "^2.0.0",
+    "mime-types": "^2.1.17",
+    "morgan": "^1.7.0",
+    "promise": "^8.0.1",
+    "python-shell": "^0.4.0",
+    "requisition": "^1.7.0",
+    "rimraf": "^2.6.1",
+    "tmp": "^0.0.33",
+    "uuid": "^3.1.0",
+    "youtube-dl": "^1.12.2"
+  },
+  "devDependencies": {
+    "babel-jest": "^20.0.0",
+    "babel-register": "^6.24.1",
+    "dotenv": "^4.0.0",
+    "eslint": "^3.19.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jest": "^20.0.0",
+    "eslint-watch": "^3.1.0",
+    "jest": "^20.0.0",
+    "nodemon": "^1.11.0",
+    "supertest": "^3.0.0"
+  },
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ]
+  },
+  "eslintConfig": {
+    "plugins": [
+      "import",
+      "jest"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2017,
+      "sourceType": "module"
+    },
+    "env": {
+      "node": true,
+      "jest": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "rules": {
+      "jest/no-focused-tests": 2,
+      "jest/no-identical-title": 2
+    }
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}
