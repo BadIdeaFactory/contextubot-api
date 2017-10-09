@@ -37,152 +37,201 @@ app.use(logger('dev', {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.get('/', (req, res) => {
-  res.send([
-    self.name, self.version
-  ]);
-});
 
-/*
-
-URL -> deref 1 (HEAD)
-
-if html -> embedly, youtubedl => bin
-if bin -> ffprobe, fingerprint
-
-*/
-
-// worker code, TODO: adapt to api
-app.post('/', (req, res) => {
-  log(req.body);
-  const { Records } = req.body;
-
-  if (! Records) return res.send({ error: [{ message: 'no records' }] });
-  res.send({ data: Records.map(processRecord) });
-});
-
-const processRecord = async (record) => {
- const [extension, name, id, ...prefix] = record.s3.object.key.split(/\/|\./).reverse(); // eslint-disable-line no-unused-vars
- const dir = tmp.dirSync();
-
- // download
- const data = await getObject({
-   Bucket: record.s3.bucket.name,
-   Key: record.s3.object.key
- });
-
- // save
- await writeFile(`${dir.name}/${id}.${extension.toLowerCase()}`, data.Body);
-
- // fingerprint
- const results = await python('audfprint.py', {
-   scriptPath: '/usr/src/audfprint/',
-   args: ['precompute', `${dir.name}/${id}.${extension.toLowerCase()}`, '-p', dir.name]
- });
- log(results);
-
- // upload
- const fingerprint = await readFile(`${dir.name}/${dir.name}/${id}.afpt`);
- const result = await putObject({
-   Body: fingerprint,
-   ACL: 'public-read',
-   Bucket: 'fingerprints.contextubot.net', // TODO -> ENV
-   Key: `${prefix.reverse().join('/')}/${id}/${id}.afpt`
- });
-
- // dir.removeCallback(); // FIXME ENOTEMPTY: directory not empty, rmdir
-
- log(result);
- return result;
-};
-
-// end worker code
-
-// get headers
-app.get('/headers', async (req, res) => {
+app.get('/', async (req, res) => {
   log(req.body);
   const { url } = req.query;
 
-  const { headers } = await request['head'](url);
-  log(headers);
-  res.send({ data: headers });
+  // const data = await inspectURL(url);
+  const data = await processURL(url);
+
+  data[self.name] = self.version;
+  res.send(data);
 });
 
-// if html -> oembed?
-app.get('/embed', async (req, res) => {
+app.post('/', async (req, res) => {
   log(req.body);
   const { url } = req.query;
-
-  const api = promisify(new embedly({ key: process.env.EMBEDLY_KEY }));
-  const data = await api.oembed({ url });
-  res.send({ data });
-});
-
-// is it media?
-app.get('/ffprobe', async (req, res) => {
-  log(req.body);
-  const { url } = req.query;
-
-  const data = await ffprobe(url, { path: ffprobeStatic.path });
-  res.send({ data });
-});
-
-// media info // WE NEED TO RENAME THINGS AROUND HERE
-app.get('/info', async (req, res) => {
-  log(req.body);
-  const { url } = req.query;
-
-  const data = await promisify(youtubedl.getInfo)(url, []);
-  res.send({ data });
-});
-
-// extract media
-// app.post('/extract', async (req, res) => {
-//
-// });
-
-// fingerprint media
-app.post('/fingerprint', async (req, res) => {
-  log(req.body);
-  const { url } = req.body;
 
   const data = await processURL(url);
-  res.send({ data });
+
+  res.send(data);
 });
 
-const processURL = async (url) => {
+const inspectURL = async url => {
+  if (!url) return {};
+
+  const { headers } = await request['head'](url);
+  const data = { headers };
+
+  if (headers['content-type'] && headers['content-type'].startsWith('text/html')) {
+    try {
+      const oembed = promisify(new embedly({ key: process.env.EMBEDLY_KEY }).oembed);
+      data.embed = await oembed({ url });
+    } catch (ignored) { log(ignored); }
+    try {
+      data.media = await promisify(youtubedl.getInfo)(url, []);
+    } catch (ignored) { log(ignored); }
+  } else {
+    try {
+      data.media = await ffprobe(url, { path: ffprobeStatic.path });
+    } catch (ignored) { log(ignored); }
+  }
+
+  return data;
+};
+
+const processURL = async url => {
+  const data = await inspectURL(url);
+
   const id = uuidv4();
   const dir = tmp.dirSync();
+  let extension;
   log(id, dir.name);
 
-  // download
-  const response = await request(url);
-  log(response.headers);
+  if (data.headers['content-type'] && data.headers['content-type'].startsWith('text/html')) {
+    extension = data.media.ext.toLowerCase();
+    try {
+      await download(url, dir, id, extension);
+    } catch (ignored) { log(ignored); }
+  } else {
+    try {
+      const response = await request(url);
+      log(response.headers);
 
-  let contentType = 'application/octet-stream';
-  if (response.headers['content-type']) contentType = response.headers['content-type'];
+      let contentType = 'application/octet-stream';
+      if (response.headers['content-type']) contentType = response.headers['content-type'];
 
-  const extension = mime.extension(contentType);
-  await response.saveTo(`${dir.name}/${id}.${extension}`)
+      extension = mime.extension(contentType).toLowerCase();
+      await response.saveTo(`${dir.name}/${id}.${extension}`);
+    } catch (ignored) { log(ignored); }
+  }
 
-  // upload (s3)
-  const data = await readFile(`${dir.name}/${id}.${extension}`);
-  const result = await putObject({
-    Body: data,
-    ACL: 'public-read',
-    ContentType: contentType,
-    Bucket: 'ingest.contextubot.net', // TODO -> ENV
-    Key: `test/${id}/${id}.${extension}`
-  });
-  log(result);
+  log(`${dir.name}/${id}.${extension}`);
 
-  // dir.removeCallback(); // FIXME ENOTEMPTY: directory not empty, rmdir
+  // fingerprint
+  try {
+    const results = await python('audfprint.py', {
+     scriptPath: '/usr/src/audfprint/',
+     args: ['precompute', `${dir.name}/${id}.${extension}`, '-p', dir.name]
+    });
+    log(results);
 
-  // compute link
-  const link = `https://s3.amazonaws.com/fingerprints.contextubot.net/test/${id}/${id}.afpt`;
-  log(link);
-  return link;
-}
+    // upload
+    const fingerprint = await readFile(`${dir.name}/${dir.name}/${id}.afpt`);
+    await putObject({
+      Body: fingerprint,
+      ACL: 'public-read',
+      Bucket: 'fingerprints.contextubot.net', // TODO -> ENV
+      // Key: `${prefix.reverse().join('/')}/${id}/${id}.afpt`,
+      Key: `test/${id}/${id}.afpt`
+    });
+
+    // compute link
+    const link = `https://s3.amazonaws.com/fingerprints.contextubot.net/test/${id}/${id}.afpt`;
+    data.fingerprint = link;
+    log(link);
+  } catch (ignored) { log(ignored); }
+
+  return data;
+};
+
+const download = (url, dir, id, extension) => new Promise((resolve, reject) => {
+  var video = youtubedl(url, [], { cwd: dir.name });
+  video.pipe(fs.createWriteStream(`${dir.name}/${id}.${extension}`));
+  video.on('end', () => resolve());
+  video.on('error', error => reject(error));
+});
+
+// // worker code, TODO: adapt to api
+// app.post('/', (req, res) => {
+//   log(req.body);
+//   const { Records } = req.body;
+//
+//   if (! Records) return res.send({ error: [{ message: 'no records' }] });
+//   res.send({ data: Records.map(processRecord) });
+// });
+//
+// const processRecord = async (record) => {
+//  const [extension, name, id, ...prefix] = record.s3.object.key.split(/\/|\./).reverse(); // eslint-disable-line no-unused-vars
+//  const dir = tmp.dirSync();
+//
+//  // download
+//  const data = await getObject({
+//    Bucket: record.s3.bucket.name,
+//    Key: record.s3.object.key
+//  });
+//
+//  // save
+//  await writeFile(`${dir.name}/${id}.${extension.toLowerCase()}`, data.Body);
+//
+//  // fingerprint
+//  const results = await python('audfprint.py', {
+//    scriptPath: '/usr/src/audfprint/',
+//    args: ['precompute', `${dir.name}/${id}.${extension.toLowerCase()}`, '-p', dir.name]
+//  });
+//  log(results);
+//
+//  // upload
+//  const fingerprint = await readFile(`${dir.name}/${dir.name}/${id}.afpt`);
+//  const result = await putObject({
+//    Body: fingerprint,
+//    ACL: 'public-read',
+//    Bucket: 'fingerprints.contextubot.net', // TODO -> ENV
+//    Key: `${prefix.reverse().join('/')}/${id}/${id}.afpt`
+//  });
+//
+//  // dir.removeCallback(); // FIXME ENOTEMPTY: directory not empty, rmdir
+//
+//  log(result);
+//  return result;
+// };
+//
+// // end worker code
+
+
+// fingerprint media
+// app.post('/fingerprint', async (req, res) => {
+//   log(req.body);
+//   const { url } = req.body;
+//
+//   const data = await processURL(url);
+//   res.send({ data });
+// });
+
+// const processURL = async (url) => {
+//   const id = uuidv4();
+//   const dir = tmp.dirSync();
+//   log(id, dir.name);
+//
+//   // download
+//   const response = await request(url);
+//   log(response.headers);
+//
+//   let contentType = 'application/octet-stream';
+//   if (response.headers['content-type']) contentType = response.headers['content-type'];
+//
+//   const extension = mime.extension(contentType);
+//   await response.saveTo(`${dir.name}/${id}.${extension}`)
+//
+//   // upload (s3)
+//   const data = await readFile(`${dir.name}/${id}.${extension}`);
+//   const result = await putObject({
+//     Body: data,
+//     ACL: 'public-read',
+//     ContentType: contentType,
+//     Bucket: 'ingest.contextubot.net', // TODO -> ENV
+//     Key: `test/${id}/${id}.${extension}`
+//   });
+//   log(result);
+//
+//   // dir.removeCallback(); // FIXME ENOTEMPTY: directory not empty, rmdir
+//
+//   // compute link
+//   const link = `https://s3.amazonaws.com/fingerprints.contextubot.net/test/${id}/${id}.afpt`;
+//   log(link);
+//   return link;
+// }
 
 
 // Catch 404 and forward to error handler
