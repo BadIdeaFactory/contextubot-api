@@ -74,7 +74,7 @@ RUN apk add --no-cache --virtual .build-deps-yarn curl gnupg tar \
 
 ADD package.json /tmp/package.json
 ADD yarn.lock /tmp/yarn.lock
-RUN cd /tmp && yarn
+RUN cd /tmp && yarn --pure-lockfile && yarn cache clean
 RUN mkdir -p /opt/app && cp -a /tmp/node_modules /opt/app/
 
 EXPOSE 8080
