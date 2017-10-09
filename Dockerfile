@@ -77,6 +77,8 @@ ADD yarn.lock /tmp/yarn.lock
 RUN cd /tmp && yarn --pure-lockfile && yarn cache clean
 RUN mkdir -p /opt/app && cp -a /tmp/node_modules /opt/app/
 
+# RUN apk add --no-cache youtube-dl
+
 EXPOSE 8080
 
 WORKDIR /opt/app
