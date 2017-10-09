@@ -70,11 +70,12 @@ const inspectURL = async url => {
       data.embed = await oembed({ url });
     } catch (ignored) { log(ignored); }
     try {
-      data.media = await promisify(youtubedl.getInfo)(url, []);
+      data.media = await promisify(youtubedl.getInfo)(url, ['--no-check-certificate']);
     } catch (ignored) { log(ignored); }
   } else {
     try {
-      data.media = await ffprobe(url, { path: ffprobeStatic.path });
+      const { FFPROBE = ffprobeStatic.path } = process.env;
+      data.media = await ffprobe(url, { path: FFPROBE });
     } catch (ignored) { log(ignored); }
   }
 
@@ -137,7 +138,8 @@ const processURL = async url => {
 };
 
 const download = (url, dir, id, extension) => new Promise((resolve, reject) => {
-  var video = youtubedl(url, [], { cwd: dir.name });
+  // const { YTDL = ??? } = process.env;
+  var video = youtubedl(url, ['--no-check-certificate'], { cwd: dir.name });
   video.pipe(fs.createWriteStream(`${dir.name}/${id}.${extension}`));
   video.on('end', () => resolve());
   video.on('error', error => reject(error));
