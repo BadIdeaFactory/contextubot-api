@@ -42,8 +42,8 @@ app.get('/', async (req, res) => {
   log(req.body);
   const { url } = req.query;
 
-  // const data = await inspectURL(url);
-  const data = await processURL(url);
+  const data = await inspectURL(url);
+  // const data = await processURL(url);
 
   data[self.name] = self.version;
   res.send(data);
