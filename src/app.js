@@ -11,6 +11,7 @@ import request from 'requisition';
 import express from 'express';
 import logger from 'morgan';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 
 import PythonShell from 'python-shell';
 import ffprobe from 'ffprobe';
@@ -36,6 +37,8 @@ app.use(logger('dev', {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+app.use(cors());
+app.options('*', cors());
 
 app.get('/', async (req, res) => {
   log(req.body);
