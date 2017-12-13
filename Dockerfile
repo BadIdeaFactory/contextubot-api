@@ -72,12 +72,23 @@ RUN apk add --no-cache --virtual .build-deps-yarn curl gnupg tar \
 # CMD [ "node" ]
 # END https://github.com/nodejs/docker-node/blob/master/8.6/alpine/Dockerfile
 
+# dejavu:
+RUN apk add --no-cache \
+  --virtual=.build-dependencies \
+  gfortran alpine-sdk llvm llvm-dev
+
+RUN apk add --no-cache portaudio portaudio-dev mariadb-dev && \
+  pip install pyaudio && \
+  pip install pydub && \
+  pip install MySQL-python
+
+# RUN apk add --no-cache youtube-dl
+
 ADD package.json /tmp/package.json
 ADD yarn.lock /tmp/yarn.lock
 RUN cd /tmp && yarn --pure-lockfile && yarn cache clean
 RUN mkdir -p /opt/app && cp -a /tmp/node_modules /opt/app/
 
-# RUN apk add --no-cache youtube-dl
 
 EXPOSE 8080
 
