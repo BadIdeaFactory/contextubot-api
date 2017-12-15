@@ -11,7 +11,7 @@ from database import get_database, Database
 #     print("Cannot open configuration: %s. Exiting" % (str(err)))
 #     sys.exit(1)
 
-config = json.load("""
+config = json.loads("""
 {
     "database": {
         "host": "contextubot.cao16ctra0vs.us-east-1.rds.amazonaws.com",
