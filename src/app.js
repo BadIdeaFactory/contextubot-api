@@ -19,11 +19,12 @@ import ffprobeStatic from 'ffprobe-static';
 import embedly from 'embedly';
 import youtubedl from 'youtube-dl';
 
-import { putObject } from './aws';
+import { putObject, getObject } from './aws';
 import self from '../package';
 
 const log = debug('contextubot:api');
 
+const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 const python = promisify(PythonShell.run);
 
@@ -59,6 +60,47 @@ app.post('/', async (req, res) => {
 
   res.send(data);
 });
+
+app.post('/event', async (req, res) => {
+  log(req.body);
+
+  const data = await processEvent(req.body);
+
+  res.send(data);
+});
+
+const processEvent = async event => {
+  const { Records } = event;
+  if (! Records) return { error: 'no records' } ;
+
+  return { data: await processRecord(Records[0]) }
+}
+
+const processRecord = async (record) => {
+  const id = uuidv4();
+  const dir = tmp.dirSync();
+  log(id, dir.name);
+
+  const data = await getObject({
+    Bucket: record.s3.bucket.name,
+    Key: record.s3.object.key
+  });
+
+  await writeFile(`${dir.name}/${id}.afpt`, data.Body);
+
+  let results;
+  try {
+     results = await python('ingest.py', {
+     scriptPath: '/opt/app/scripts/',
+     args: [`${dir.name}/${id}.afpt`, id, record.s3.object.key]
+    });
+    log(results);
+  } catch (error) {
+    log(error);
+  }
+
+  return results;
+}
 
 const inspectURL = async url => {
   if (!url) return {};
