@@ -1,6 +1,11 @@
-# contextubot-api
+# Contextubot API
 
-Based on https://github.com/vmasto/express-babel Express.js with Babel Boilerplate
+This repository contains the API of Contextubot.  It is built from the
+[Express.js with Babel Boilerplate](https://github.com/vmasto/express-babel).
+
+The API here is primarily used by the [Contextubot interfaces](https://github.com/BadIdeaFactory/contextubot). Full
+installation instructions still need to be written for the overall
+suite.
 
 ### Features:
 - [Express.js](https://expressjs.com/) as the web framework.
