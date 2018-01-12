@@ -7,6 +7,7 @@ import uuidv4 from 'uuid/v4';
 import mime from 'mime-types';
 import tmp from 'tmp';
 import request from 'requisition';
+import  rrequest from 'request';
 
 import express from 'express';
 import logger from 'morgan';
@@ -35,14 +36,13 @@ app.disable('x-powered-by');
 app.use(logger('dev', {
   skip: () => app.get('env') === 'test'
 }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(cors());
 app.options('*', cors());
 
 app.get('/', async (req, res) => {
-  log(req.body);
   const { url } = req.query;
 
   const data = await inspectURL(url);
@@ -52,7 +52,7 @@ app.get('/', async (req, res) => {
   res.send(data);
 });
 
-app.post('/', async (req, res) => {
+app.post('/', bodyParser.json(), async (req, res) => {
   log(req.body);
   const { url } = req.query;
 
@@ -61,7 +61,7 @@ app.post('/', async (req, res) => {
   res.send(data);
 });
 
-app.post('/event', async (req, res) => {
+app.post('/event', bodyParser.json(), async (req, res) => {
   log(req.body);
 
   const data = await processEvent(req.body);
@@ -227,6 +227,11 @@ const download = (url, dir, id, extension) => new Promise((resolve, reject) => {
   video.on('error', error => reject(error));
 });
 
+
+app.get('/proxy', function(req, res) {
+  const { url } = req.query;
+  req.pipe(rrequest(url), {end: true}).pipe(res, {end: true});
+});
 
 // Catch 404 and forward to error handler
 app.use((req, res, next) => {
