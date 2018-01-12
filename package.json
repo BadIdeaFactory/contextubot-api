@@ -32,6 +32,7 @@
     "requisition": "^1.7.0",
     "rimraf": "^2.6.1",
     "tmp": "^0.0.33",
+    "url-parse": "^1.2.0",
     "uuid": "^3.1.0",
     "youtube-dl": "^1.12.2"
   },

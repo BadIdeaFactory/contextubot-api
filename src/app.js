@@ -7,7 +7,8 @@ import uuidv4 from 'uuid/v4';
 import mime from 'mime-types';
 import tmp from 'tmp';
 import request from 'requisition';
-import  rrequest from 'request';
+import rrequest from 'request';
+import urlParse from 'url-parse';
 
 import express from 'express';
 import logger from 'morgan';
@@ -230,7 +231,14 @@ const download = (url, dir, id, extension) => new Promise((resolve, reject) => {
 
 app.get('/proxy', function(req, res) {
   const { url } = req.query;
-  req.pipe(rrequest(url), {end: true}).pipe(res, {end: true});
+  const parsedUrl = new urlParse(url);
+  if (parsedUrl.hostname.endsWith('archive.org')) {
+    req.pipe(rrequest(url), {end: true}).pipe(res, {end: true});
+  } else {
+    res
+      .status(418)
+      .send({ error: [{ message: 'I\'m a teapot' }] });
+  }
 });
 
 // Catch 404 and forward to error handler
