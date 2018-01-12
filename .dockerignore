@@ -1,5 +1,6 @@
 .git
 .env
+*.pyc
 LICENSE
 README.md
 node_modules
