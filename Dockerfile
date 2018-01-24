@@ -80,6 +80,8 @@ RUN apk add --no-cache llvm portaudio \
     && pip install MySQL-python \
     && apk del .build-dependencies
 
+RUN pip install fire && pip install dumper
+
 ADD package.json /tmp/package.json
 ADD yarn.lock /tmp/yarn.lock
 
