@@ -54,9 +54,24 @@ class SQLDatabase(Database):
     FIELD_FINGERPRINTED = "fingerprinted"
 
     # creates
+    # CREATE_FINGERPRINTS_TABLE = """
+    #     CREATE TABLE IF NOT EXISTS `%s` (
+    #          `%s` binary(10) not null,
+    #          `%s` mediumint unsigned not null,
+    #          `%s` int unsigned not null,
+    #      INDEX (%s),
+    #      UNIQUE KEY `unique_constraint` (%s, %s, %s),
+    #      FOREIGN KEY (%s) REFERENCES %s(%s) ON DELETE CASCADE
+    # ) ENGINE=INNODB;""" % (
+    #     FINGERPRINTS_TABLENAME, Database.FIELD_HASH,
+    #     Database.FIELD_SONG_ID, Database.FIELD_OFFSET, Database.FIELD_HASH,
+    #     Database.FIELD_SONG_ID, Database.FIELD_OFFSET, Database.FIELD_HASH,
+    #     Database.FIELD_SONG_ID, SONGS_TABLENAME, Database.FIELD_SONG_ID
+    # )
+
     CREATE_FINGERPRINTS_TABLE = """
         CREATE TABLE IF NOT EXISTS `%s` (
-             `%s` binary(10) not null,
+             `%s` varchar(10) not null,
              `%s` mediumint unsigned not null,
              `%s` int unsigned not null,
          INDEX (%s),
@@ -74,7 +89,7 @@ class SQLDatabase(Database):
             `%s` mediumint unsigned not null auto_increment,
             `%s` varchar(250) not null,
             `%s` tinyint default 0,
-            `%s` binary(20) not null,
+            `%s` binary(20),
         PRIMARY KEY (`%s`),
         UNIQUE KEY `%s` (`%s`)
     ) ENGINE=INNODB;""" % (
@@ -84,9 +99,14 @@ class SQLDatabase(Database):
     )
 
     # inserts (ignores duplicates)
+    # INSERT_FINGERPRINT = """
+    #     INSERT IGNORE INTO %s (%s, %s, %s) values
+    #         (UNHEX(%%s), %%s, %%s);
+    # """ % (FINGERPRINTS_TABLENAME, Database.FIELD_HASH, Database.FIELD_SONG_ID, Database.FIELD_OFFSET)
+
     INSERT_FINGERPRINT = """
         INSERT IGNORE INTO %s (%s, %s, %s) values
-            (UNHEX(%%s), %%s, %%s);
+            (%%s, %%s, %%s);
     """ % (FINGERPRINTS_TABLENAME, Database.FIELD_HASH, Database.FIELD_SONG_ID, Database.FIELD_OFFSET)
 
     INSERT_SONG = "INSERT INTO %s (%s, %s) values (%%s, UNHEX(%%s));" % (
@@ -97,10 +117,13 @@ class SQLDatabase(Database):
         SELECT %s, %s FROM %s WHERE %s = UNHEX(%%s);
     """ % (Database.FIELD_SONG_ID, Database.FIELD_OFFSET, FINGERPRINTS_TABLENAME, Database.FIELD_HASH)
 
-    SELECT = """
-        SELECT %s, %s FROM %s WHERE %s = UNHEX(LPAD(RPAD(%%s, 19, '0'), 20, '0'));
-    """ % (Database.FIELD_SONG_ID, Database.FIELD_OFFSET, FINGERPRINTS_TABLENAME, Database.FIELD_HASH)
+    # SELECT = """
+    #     SELECT %s, %s FROM %s WHERE %s = UNHEX(LPAD(RPAD(%%s, 19, '0'), 20, '0'));
+    # """ % (Database.FIELD_SONG_ID, Database.FIELD_OFFSET, FINGERPRINTS_TABLENAME, Database.FIELD_HASH)
 
+    SELECT = """
+        SELECT %s, %s FROM %s WHERE %s = %%s;
+    """ % (Database.FIELD_SONG_ID, Database.FIELD_OFFSET, FINGERPRINTS_TABLENAME, Database.FIELD_HASH)
 
     SELECT_MULTIPLE = """
         SELECT HEX(%s), %s, %s FROM %s WHERE %s IN (%%s);
@@ -162,7 +185,7 @@ class SQLDatabase(Database):
         with self.cursor() as cur:
             cur.execute(self.CREATE_SONGS_TABLE)
             cur.execute(self.CREATE_FINGERPRINTS_TABLE)
-            cur.execute(self.DELETE_UNFINGERPRINTED)
+            # cur.execute(self.DELETE_UNFINGERPRINTED)
 
     def empty(self):
         """
