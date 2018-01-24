@@ -11,14 +11,25 @@ import audfprint.hash_table as hash_table
 
 from database import get_database, Database
 
-DATABASE_CONFIG_FILE = "./database.cnf"
+# DATABASE_CONFIG_FILE = "./database.cnf"
+#
+# try:
+#     with open(DATABASE_CONFIG_FILE) as f:
+#         config = json.load(f)
+# except IOError as err:
+#     print("Cannot open configuration: %s. Exiting" % (str(err)))
+#     sys.exit(1)
 
-try:
-    with open(DATABASE_CONFIG_FILE) as f:
-        config = json.load(f)
-except IOError as err:
-    print("Cannot open configuration: %s. Exiting" % (str(err)))
-    sys.exit(1)
+config = json.loads("""
+{
+    "database": {
+        "host": "contextubot.cao16ctra0vs.us-east-1.rds.amazonaws.com",
+        "user": "contextubot",
+        "passwd": "Ieleewoughahg6nabee9ahDeghooqu6D",
+        "db": "ebdb"
+    }
+}
+""")
 
 db_cls = get_database(config.get("database_type", None))
 
@@ -74,7 +85,7 @@ class HashTable(object):
         for ix in xrange(nhashes):
             # if ix > 5:
             #     break
-            
+
             # print "- time/hash ------------"
             # print ix
             # print hashes[ix]
