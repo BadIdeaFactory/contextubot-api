@@ -77,8 +77,8 @@ RUN apk add --no-cache llvm portaudio \
         gfortran alpine-sdk  llvm-dev  portaudio-dev mariadb-dev \
     && pip install pyaudio \
     && pip install pydub \
-    && pip install MySQL-python \
-    && apk del .build-dependencies
+    && pip install MySQL-python
+    # && apk del .build-dependencies
 
 RUN pip install fire && pip install dumper
 
