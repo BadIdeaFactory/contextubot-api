@@ -136,11 +136,13 @@ class Fprint(object):
 
         db.insert_hashes(id, hashes)
 
+    def get_song_by_id(self, id):
+      print json.dump(db.get_song_by_id(id), indent=2)
 
-    def match(self):
+    def match(self, qry):
         matcher = audfprint_match.Matcher()
         matcher.find_time_range = True
-        matcher.verbose = 1
+        matcher.verbose = False
         matcher.max_returns = 100
 
         analyzer = audfprint_analyze.Analyzer()
@@ -150,11 +152,12 @@ class Fprint(object):
         # analyzer.exact_count = True
         analyzer.density = 20.0
         analyzer.target_sr = 11025
+        analyzer.verbose = False
 
         hash_tab = HashTable("./samples.pklz")
         hash_tab.params['samplerate'] = analyzer.target_sr
 
-        qry = "./Samples/viral.afpt"
+        #qry = "./Samples/viral.afpt"
 
         rslts, dur, nhash = matcher.match_file(analyzer, hash_tab, qry, 0)
         t_hop = analyzer.n_hop / float(analyzer.target_sr)
@@ -163,7 +166,7 @@ class Fprint(object):
         msgrslt = []
         if len(rslts) == 0:
             nhashaligned = 0
-            msgrslt.append("NOMATCH " + qrymsg)
+            # msgrslt.append("NOMATCH " + qrymsg)
         else:
             for (tophitid, nhashaligned, aligntime, nhashraw, rank, min_time, max_time) in rslts:
                     msg = ("Matched {:6.1f} s starting at {:6.1f} s in {:s}"
@@ -171,10 +174,18 @@ class Fprint(object):
                             (max_time - min_time) * t_hop, min_time * t_hop, qry,
                             (min_time + aligntime) * t_hop, tophitid,#),
                             max_time * t_hop, min_time * t_hop, aligntime * t_hop, t_hop)
-
+                    # msg = {}
+                    # msg["matched"] = (max_time - min_time) * t_hop
+                    # msg["start"] = min_time * t_hop
+                    # msg["from"] = qry
+                    # msg["to"] = (min_time + aligntime) * t_hop
+                    # msg["time"] = (min_time + aligntime) * t_hop
+                    # msg["in"] = tophitid
+                    #list(db.get_song_by_id(tophitid)["song_name"])
                     msgrslt.append(msg)
 
-        dumper.dump(msgrslt)
+        # dumper.dump(msgrslt)
+        print json.dumps(msgrslt, indent=2)
 
 
 if __name__ == '__main__':

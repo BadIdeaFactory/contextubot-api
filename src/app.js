@@ -2,6 +2,7 @@ import debug from 'debug';
 
 import fs from 'fs';
 import { promisify } from 'util';
+import Promise from 'promise';
 
 import uuidv4 from 'uuid/v4';
 import mime from 'mime-types';
@@ -52,6 +53,35 @@ app.get('/', async (req, res) => {
   data[self.name] = self.version;
   res.send(data);
 });
+
+app.get('/match', async (req, res) => {
+  const data = await match();
+
+  data[self.name] = self.version;
+  res.send(data);
+});
+
+const match = (params) => {
+  return new Promise((fulfill, reject) => {
+    const result = { data: null, errors: null };
+
+    const script = new PythonShell('fprint.py', {
+      scriptPath: '/opt/app/scripts/',
+      args: ['match', '/opt/app/test/test.afpt'],
+      mode: 'text'
+    });
+
+    script.on('message', function (message) {
+      if (! result.data) result.data = [];
+      result.data.push(message);
+    });
+
+    script.end(function (err) {
+      if (err) result.errors = [err];
+      fulfill(result);
+    });
+  });
+};
 
 app.post('/', bodyParser.json(), async (req, res) => {
   log(req.body);
