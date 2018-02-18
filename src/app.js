@@ -61,14 +61,14 @@ app.get('/match', async (req, res) => {
   res.send(data);
 });
 
-const match = (params) => {
+const match = (file = '/opt/app/test/test.afpt') => {
   return new Promise((fulfill, reject) => {
     const result = { data: [], errors: [] };
     const rows = [];
 
     const script = new PythonShell('fprint.py', {
       scriptPath: '/opt/app/scripts/',
-      args: ['match', '/opt/app/test/test.afpt'],
+      args: ['match', file],
       mode: 'text'
     });
 
@@ -241,7 +241,7 @@ const processURL = async url => {
     log(results);
 
     // upload
-    const fingerprint = await readFile(`${dir.name}/${dir.name}/${id}.afpt`);
+    const fingerprint = await readFile(`${dir.name}${dir.name}/${id}.afpt`);
     await putObject({
       Body: fingerprint,
       ACL: 'public-read',
@@ -258,6 +258,8 @@ const processURL = async url => {
     log(error);
     errors.push(error);
   }
+
+  data.matches =  (await match(`${dir.name}${dir.name}/${id}.afpt`)).data;
 
   if (errors.length > 0) {
     if (!data.errors) data.errors = [];
