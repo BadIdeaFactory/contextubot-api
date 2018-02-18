@@ -165,7 +165,7 @@ class Fprint(object):
         t_hop = analyzer.n_hop / float(analyzer.target_sr)
         qrymsg = qry + (' %.1f ' % dur) + "sec " + str(nhash) + " raw hashes"
 
-        print "duration,start,from,time,source,sourceId,nhashaligned,aligntime,nhashraw,rank,min_time,max_time"
+        # print "duration,start,from,time,source,sourceId,nhashaligned,aligntime,nhashraw,rank,min_time,max_time, t_hop"
         if len(rslts) == 0:
             nhashaligned = 0
         else:

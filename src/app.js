@@ -63,7 +63,8 @@ app.get('/match', async (req, res) => {
 
 const match = (params) => {
   return new Promise((fulfill, reject) => {
-    const result = { data: null, errors: null };
+    const result = { data: [], errors: [] };
+    const rows = [];
 
     const script = new PythonShell('fprint.py', {
       scriptPath: '/opt/app/scripts/',
@@ -72,12 +73,27 @@ const match = (params) => {
     });
 
     script.on('message', function (message) {
-      if (! result.data) result.data = [];
-      result.data.push(message);
+      rows.push(message);
     });
 
     script.end(function (err) {
-      if (err) result.errors = [err];
+      if (err && err.exitCode !== 0) result.errors.append(err);
+      result.data = rows.map(row => {
+        let [duration, start, from, time, source, sourceId, nhashaligned, aligntime, nhashraw, rank, mintime, maxtime, thop] = row.split(',');
+        duration = parseFloat(duration);
+        start = parseFloat(start);
+        time = parseFloat(time);
+        thop = parseFloat(thop);
+        nhashaligned = parseInt(nhashaligned);
+        aligntime = parseInt(aligntime);
+        nhashraw = parseInt(nhashraw);
+        rank = parseInt(rank);
+        mintime = parseInt(mintime);
+        maxtime = parseInt(maxtime);
+        sourceId = parseInt(sourceId);
+        return {duration, start, from, time, source, sourceId, nhashaligned, aligntime, nhashraw, rank, mintime, maxtime, thop};
+      });
+      if (result.errors.length === 0) delete result.errors;
       fulfill(result);
     });
   });
