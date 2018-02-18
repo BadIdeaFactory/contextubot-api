@@ -114,7 +114,10 @@ class Matcher(object):
         # for the ref track, to downweight large numbers of chance
         # matches against longer reference tracks.
         # wtdcounts = rawcounts/(ht.hashesperid[ids].astype(float))
+        # FIXME
         wtdcounts = rawcounts/81839
+        # wtdcounts = rawcounts/(db.get_song_num_fingerprints().astype(float))
+
 
         # Find all the actual hits for a the most popular ids
         bestcountsixs = np.argsort(wtdcounts)[::-1]

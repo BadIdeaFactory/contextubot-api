@@ -142,6 +142,10 @@ class SQLDatabase(Database):
         SELECT COUNT(*) as n FROM %s
     """ % (FINGERPRINTS_TABLENAME)
 
+    SELECT_SONG_NUM_FINGERPRINTS = """
+        SELECT COUNT(*) as n FROM %s WHERE %s = %%s
+    """ % (FINGERPRINTS_TABLENAME, Database.FIELD_SONG_ID)
+
     SELECT_UNIQUE_SONG_IDS = """
         SELECT COUNT(DISTINCT %s) as n FROM %s WHERE %s = 1;
     """ % (Database.FIELD_SONG_ID, SONGS_TABLENAME, FIELD_FINGERPRINTED)
@@ -246,6 +250,17 @@ class SQLDatabase(Database):
             cur.execute(self.SELECT_SONGS)
             for row in cur:
                 yield row
+
+    def get_song_num_fingerprints(self, sid):
+        """
+        Returns the number of fingerprints for a song by its identifier
+        """
+        with self.cursor() as cur:
+            cur.execute(self.SELECT_SONG_NUM_FINGERPRINTS, (sid,))
+
+            for count, in cur:
+                return count
+            return 0
 
     def get_song_by_id(self, sid):
         """
