@@ -55,13 +55,13 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/match', async (req, res) => {
-  const data = await match();
+  const data = await match('/opt/app/test/test.afpt');
 
   data[self.name] = self.version;
   res.send(data);
 });
 
-const match = (file = '/opt/app/test/test.afpt') => {
+const match = (file) => {
   return new Promise((fulfill, reject) => {
     const result = { data: [], errors: [] };
     const rows = [];

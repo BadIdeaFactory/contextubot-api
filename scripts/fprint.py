@@ -158,7 +158,7 @@ class Fprint(object):
         analyzer.target_sr = 11025
         analyzer.verbose = False
 
-        hash_tab = HashTable("./samples.pklz")
+        hash_tab = HashTable("none")
         hash_tab.params['samplerate'] = analyzer.target_sr
 
         rslts, dur, nhash = matcher.match_file(analyzer, hash_tab, qry, 0)
