@@ -77,7 +77,11 @@ const match = (file) => {
     });
 
     script.end(function (err) {
-      if (err && err.exitCode !== 0) result.errors.append(err);
+      console.log(err);
+      if (err && err.exitCode !== 0) {
+        if (!result.errors) result.errors = [];
+        result.errors.append(err);
+      }
       result.data = rows.map(row => {
         let [duration, start, from, time, source, sourceId, nhashaligned, aligntime, nhashraw, rank, mintime, maxtime, thop] = row.split(',');
         duration = parseFloat(duration);
@@ -241,6 +245,7 @@ const processURL = async url => {
        '--samplerate', '11025',
        '--density', '20',
        '--shifts', '1',
+       '--maxtimebits', '32',
        `${dir.name}/${id}.${extension}`,
        '-p', dir.name
      ]

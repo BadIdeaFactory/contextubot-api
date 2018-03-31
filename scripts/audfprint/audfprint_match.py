@@ -117,7 +117,7 @@ class Matcher(object):
         # FIXME
         # wtdcounts = rawcounts/81839
         # wtdcounts = rawcounts/(db.get_songs_num_fingerprints(ids).astype(float))
-        vfunc = np.vectorize(db.get_song_num_fingerprints)
+        vfunc = np.vectorize(self.db.get_song_num_fingerprints)
         wtdcounts = rawcounts/(vfunc(ids).astype(float))
 
 

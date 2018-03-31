@@ -34,7 +34,7 @@ config = json.loads("""
 db_cls = get_database(config.get("database_type", None))
 
 db = db_cls(**config.get("database", {}))
-db.setup()
+# db.setup()
 
 def queryHash(hash):
     hash_ = '{:x}'.format(hash)
@@ -51,7 +51,7 @@ class HashTable(object):
     def __init__(self, filename = None, hashbits = 20, depth = 100, maxtime = 16384):
         self.hashbits = hashbits
         self.depth = depth
-        self.maxtimebits = hash_table._bitsfor(maxtime)
+        self.maxtimebits = 32 # hash_table._bitsfor(maxtime)
         # allocate the big table
         size = 2 ** hashbits
         self.table = np.zeros((size, depth), dtype=np.uint32)
@@ -64,15 +64,15 @@ class HashTable(object):
         # Empty params
         self.params = {}
 
-    def get_entry(self, hash_):
-        """ Return np.array of [id, time] entries
-            associate with the given hash as rows.
-        """
-        vals = self.table[hash_, :min(self.depth, self.counts[hash_])]
-        maxtimemask = (1 << self.maxtimebits) - 1
-        # ids we report externally start at 0, but in table they start at 1.
-        ids = (vals >> self.maxtimebits) - 1
-        return np.c_[ids, vals & maxtimemask].astype(np.int32)
+    # def get_entry(self, hash_):
+    #     """ Return np.array of [id, time] entries
+    #         associate with the given hash as rows.
+    #     """
+    #     vals = self.table[hash_, :min(self.depth, self.counts[hash_])]
+    #     maxtimemask = (1 << self.maxtimebits) - 1
+    #     # ids we report externally start at 0, but in table they start at 1.
+    #     ids = (vals >> self.maxtimebits) - 1
+    #     return np.c_[ids, vals & maxtimemask].astype(np.int32)
 
     def get_hits(self, hashes):
         # Allocate to largest possible number of hits
@@ -147,7 +147,10 @@ class Fprint(object):
         matcher.find_time_range = True
         matcher.verbose = False
         matcher.max_returns = 100
-        # matcher.db = db
+        matcher.db = db
+
+        matcher.exact_count = True
+        matcher.max_alignments_per_id = 20
 
         analyzer = audfprint_analyze.Analyzer()
         analyzer.n_fft = 512
