@@ -236,7 +236,14 @@ const processURL = async url => {
   try {
     const results = await python('audfprint.py', {
      scriptPath: '/usr/src/audfprint/',
-     args: ['precompute', `${dir.name}/${id}.${extension}`, '-p', dir.name]
+     args: [
+       'precompute',
+       '--samplerate', '11025',
+       '--density', '20',
+       '--shifts', '1',
+       `${dir.name}/${id}.${extension}`,
+       '-p', dir.name
+     ]
     });
     log(results);
 
