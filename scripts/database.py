@@ -84,6 +84,15 @@ class Database(object):
         pass
 
     @abc.abstractmethod
+    def get_songs_num_fingerprints(self, sid):
+        """
+        Returns the number of fingerprints for a song by its identifier
+
+        sid: Song identifier
+        """
+        pass
+
+    @abc.abstractmethod
     def get_song_num_fingerprints(self, sid):
         """
         Returns the number of fingerprints for a song by its identifier

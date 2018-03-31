@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from itertools import izip_longest
 import Queue
+import numpy as np
 
 import MySQLdb as mysql
 from MySQLdb.cursors import DictCursor
@@ -261,6 +262,11 @@ class SQLDatabase(Database):
             for count, in cur:
                 return count
             return 0
+
+    # TODO ?
+    def get_songs_num_fingerprints(self, ids):
+        return 0
+
 
     def get_song_by_id(self, sid):
         """
