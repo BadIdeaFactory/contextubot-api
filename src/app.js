@@ -236,10 +236,13 @@ const processURL = async url => {
     errors.push(error);
   }
 
+  // subclip 1 minute to audio
+  // or reject longer tracks
+
   // fingerprint
   try {
     const results = await python('audfprint.py', {
-     scriptPath: '/usr/src/audfprint/',
+     scriptPath: '/usr/src/audfprint/', // '/opt/app/scripts/audfprint/',
      args: [
        'precompute',
        '--samplerate', '11025',
