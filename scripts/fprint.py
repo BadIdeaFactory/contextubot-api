@@ -36,11 +36,11 @@ db_cls = get_database(config.get("database_type", None))
 db = db_cls(**config.get("database", {}))
 # db.setup()
 
-def queryHash(hash):
+def queryHash(hash, prefix = None):
     hash_ = '{:x}'.format(hash)
     # int(str(hash))
     # print(hash_)
-    r = np.array(list(db.query(hash_)))
+    r = np.array(list(db.query(hash_, prefix)))
     # print(r)
     if len(r) == 0:
         return r.astype(np.int32)
@@ -48,7 +48,8 @@ def queryHash(hash):
         return r.astype(np.int32)
 
 class HashTable(object):
-    def __init__(self, filename = None, hashbits = 20, depth = 100, maxtime = 16384):
+    def __init__(self, prefix = None, hashbits = 20, depth = 100, maxtime = 16384):
+        self.prefix = prefix
         self.hashbits = hashbits
         self.depth = depth
         self.maxtimebits = 32 # hash_table._bitsfor(maxtime)
@@ -96,7 +97,7 @@ class HashTable(object):
             hash_ = hashes[ix][1]
             # nids = min(self.depth, self.counts[hash_])
             # tabvals = self.table[hash_, :nids]
-            tabvals = queryHash(hash_)
+            tabvals = queryHash(hash_, self.prefix)
             # print "- hits ------------"
             # print tabvals
             # print tabvals.shape
@@ -142,7 +143,7 @@ class Fprint(object):
     def get_song_num_fingerprints(self, id):
       print db.get_song_num_fingerprints(id)
 
-    def match(self, qry):
+    def match(self, qry, prefix = None):
         matcher = audfprint_match.Matcher()
         matcher.find_time_range = True
         matcher.verbose = False
@@ -161,7 +162,7 @@ class Fprint(object):
         analyzer.target_sr = 11025
         analyzer.verbose = False
 
-        hash_tab = HashTable("none")
+        hash_tab = HashTable(prefix)
         hash_tab.params['samplerate'] = analyzer.target_sr
 
         rslts, dur, nhash = matcher.match_file(analyzer, hash_tab, qry, 0)

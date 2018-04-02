@@ -126,6 +126,11 @@ class SQLDatabase(Database):
         SELECT %s, %s FROM %s WHERE %s = %%s;
     """ % (Database.FIELD_SONG_ID, Database.FIELD_OFFSET, FINGERPRINTS_TABLENAME, Database.FIELD_HASH)
 
+    SELECT_PREFIX = """
+        SELECT %s, %s FROM %s WHERE %s = %%s ;
+        SELECT f.song_id, f.offset FROM %s AS f, songs as s WHERE f.hash = %%s AND s.song_id = f.song_id AND s.song_name LIKE %%s
+    """ % (FINGERPRINTS_TABLENAME)
+
     SELECT_MULTIPLE = """
         SELECT HEX(%s), %s, %s FROM %s WHERE %s IN (%%s);
     """ % (Database.FIELD_HASH, Database.FIELD_SONG_ID, Database.FIELD_OFFSET,
@@ -291,18 +296,20 @@ class SQLDatabase(Database):
             cur.execute(self.INSERT_SONG, (songname, file_hash))
             return cur.lastrowid
 
-    def query(self, hash):
+    def query(self, hash, prefix = None):
         """
         Return all tuples associated with hash.
 
         If hash is None, returns all entries in the
         database (be careful with that one!).
         """
-        # select all if no key
-        query = self.SELECT_ALL if hash is None else self.SELECT
+        # # select all if no key
+        # query = self.SELECT_ALL if hash is None else self.SELECT
+
+        query = self.SELECT_PREFIX if prefix is None else self.SELECT
 
         with self.cursor() as cur:
-            cur.execute(query, (hash,))
+            cur.execute(query, (hash, prefix,))
             for sid, offset in cur:
                 yield (sid, offset)
 

@@ -132,7 +132,7 @@ class Database(object):
         pass
 
     @abc.abstractmethod
-    def query(self, hash):
+    def query(self, hash, prefix):
         """
         Returns all matching fingerprint entries associated with
         the given hash as parameter.
