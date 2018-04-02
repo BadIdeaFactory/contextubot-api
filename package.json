@@ -27,6 +27,7 @@
     "mime-types": "^2.1.17",
     "morgan": "^1.7.0",
     "promise": "^8.0.1",
+    "pubnub": "^4.20.2",
     "python-shell": "^0.4.0",
     "request": "^2.83.0",
     "requisition": "^1.7.0",

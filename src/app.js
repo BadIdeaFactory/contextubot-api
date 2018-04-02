@@ -21,6 +21,7 @@ import ffprobe from 'ffprobe';
 import ffprobeStatic from 'ffprobe-static';
 import embedly from 'embedly';
 import youtubedl from 'youtube-dl';
+import PubNub from 'pubnub';
 
 import { putObject, getObject } from './aws';
 import self from '../package';
@@ -33,6 +34,13 @@ const python = promisify(PythonShell.run);
 
 const app = express();
 tmp.setGracefulCleanup();
+
+const pubnub = new PubNub({
+    subscribeKey: "sub-c-79339ef4-3622-11e8-8741-e2a40c21c595",
+    publishKey: "pub-c-0c10c685-2b8a-4aa9-a835-766676172c5a",
+    secretKey: "sec-c-NjhjYjM3ZjAtYTU3ZS00NDM4LWIwMWEtYTU2NDVlNTM4MDBl",
+    ssl: true
+})
 
 app.disable('x-powered-by');
 app.use(logger('dev', {
@@ -54,21 +62,21 @@ app.get('/', async (req, res) => {
   res.send(data);
 });
 
-app.get('/match', async (req, res) => {
-  const data = await match('/opt/app/test/test.afpt');
+// app.get('/match', async (req, res) => {
+//   const data = await match('/opt/app/test/test.afpt');
+//
+//   data[self.name] = self.version;
+//   res.send(data);
+// });
 
-  data[self.name] = self.version;
-  res.send(data);
-});
-
-const match = (file) => {
+const match = (file, prefix) => {
   return new Promise((fulfill, reject) => {
     const result = { data: [], errors: [] };
     const rows = [];
 
     const script = new PythonShell('fprint.py', {
       scriptPath: '/opt/app/scripts/',
-      args: ['match', file, 'CNNW%'], //
+      args: ['match', file, prefix], //
       mode: 'text'
     });
 
@@ -274,7 +282,47 @@ const processURL = async url => {
     errors.push(error);
   }
 
-  data.matches =  (await match(`${dir.name}${dir.name}/${id}.afpt`)).data;
+  data.matches = [];
+  const channels = [
+    'BBCNEWS',
+    'CNNW',
+    'FOXNEWSW',
+    'MSNBCW'
+  ];
+  const dates = ['20180323', '20180324', '20180325', '20180326', '20180327', '20180328', '20180329', '20180330'];
+
+  for (let c = 0; c < channels.length; c++) {
+    for (let d = 0; d < dates.length; d++) {
+      const matches = (await match(`${dir.name}${dir.name}/${id}.afpt`, `${channels[c]}_${dates[d]}_%`)).data;
+      pubnub.publish({
+        message: {
+            data: matches
+        },
+        channel: 'Channel-4lnxljbjk',
+        sendByPost: false, // true to send via post
+        storeInHistory: false, //override default storage options
+        meta: {
+          channel: channels[c],
+          date: dates[d]
+        }
+      }, (status, response) => console.log(status, response));
+      data.matches = data.matches.concat(matches);
+
+       // match(`${dir.name}${dir.name}/${id}.afpt`, `${channels[c]}_${dates[d]}_%`)
+       // .then(({ data }) => {
+       //   pubnub.publish({
+       //     message: {
+       //         data: data
+       //     },
+       //     channel: 'Channel-4lnxljbjk',
+       //     sendByPost: false, // true to send via post
+       //     storeInHistory: false, //override default storage options
+       //   }, (status, response) => console.log(status, response));
+       // })
+    }
+  }
+
+  // data.matches =  (await match(`${dir.name}${dir.name}/${id}.afpt`)).data;
 
   if (errors.length > 0) {
     if (!data.errors) data.errors = [];
