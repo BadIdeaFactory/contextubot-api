@@ -68,7 +68,7 @@ const match = (file) => {
 
     const script = new PythonShell('fprint.py', {
       scriptPath: '/opt/app/scripts/',
-      args: ['match', file],
+      args: ['match', file, 'CNNW%'], //
       mode: 'text'
     });
 

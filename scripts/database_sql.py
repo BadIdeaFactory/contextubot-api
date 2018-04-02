@@ -127,9 +127,8 @@ class SQLDatabase(Database):
     """ % (Database.FIELD_SONG_ID, Database.FIELD_OFFSET, FINGERPRINTS_TABLENAME, Database.FIELD_HASH)
 
     SELECT_PREFIX = """
-        SELECT %s, %s FROM %s WHERE %s = %%s ;
-        SELECT f.song_id, f.offset FROM %s AS f, songs as s WHERE f.hash = %%s AND s.song_id = f.song_id AND s.song_name LIKE %%s
-    """ % (FINGERPRINTS_TABLENAME)
+        SELECT f.song_id, f.offset FROM fingerprints AS f, songs as s WHERE f.hash = %s AND s.song_id = f.song_id AND s.song_name LIKE %s
+    """
 
     SELECT_MULTIPLE = """
         SELECT HEX(%s), %s, %s FROM %s WHERE %s IN (%%s);
@@ -306,10 +305,10 @@ class SQLDatabase(Database):
         # # select all if no key
         # query = self.SELECT_ALL if hash is None else self.SELECT
 
-        query = self.SELECT_PREFIX if prefix is None else self.SELECT
+        query = self.SELECT if prefix is None else self.SELECT_PREFIX
 
         with self.cursor() as cur:
-            cur.execute(query, (hash, prefix,))
+            cur.execute(query, (hash, prefix))
             for sid, offset in cur:
                 yield (sid, offset)
 
