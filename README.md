@@ -71,6 +71,15 @@ yarn start
 
 will run `build` (via the `prestart` hook) and start the compiled application from the `/dist` folder.
 
+## Docker build
+
+Login with the output of `aws ecr get-login --no-include-email --region us-east-1` then:
+
+```sh
+docker build -t contextubot-api .
+docker tag contextubot-api:latest 223945844886.dkr.ecr.us-east-1.amazonaws.com/contextubot-api:latest
+docker push 223945844886.dkr.ecr.us-east-1.amazonaws.com/contextubot-api:latest
+```
 
 ## License
 MIT License. See the [LICENSE](LICENSE) file.
