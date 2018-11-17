@@ -5,8 +5,8 @@ cache:
   yarn: true
   directories:
   - node_modules
-script:
-- npm test
+# script:
+# - npm test
 notifications:
   irc: chat.freenode.net#contextubot
   slack:

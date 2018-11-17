@@ -14,28 +14,17 @@
     "lint": "esw -w src test"
   },
   "dependencies": {
-    "aws-sdk": "^2.108.0",
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.4.0",
     "body-parser": "^1.17.1",
     "cors": "^2.8.4",
     "debug": "^3.0.1",
-    "embedly": "^2.1.0",
     "express": "^4.15.2",
-    "ffprobe": "^1.1.0",
-    "ffprobe-static": "^2.0.0",
-    "mime-types": "^2.1.17",
     "morgan": "^1.7.0",
-    "promise": "^8.0.1",
-    "pubnub": "^4.20.2",
-    "python-shell": "^0.4.0",
     "request": "^2.83.0",
-    "requisition": "^1.7.0",
     "rimraf": "^2.6.1",
     "tmp": "^0.0.33",
-    "url-parse": "^1.2.0",
-    "uuid": "^3.1.0",
-    "youtube-dl": "^1.12.2"
+    "url-parse": "^1.2.0"
   },
   "devDependencies": {
     "babel-jest": "^20.0.0",
